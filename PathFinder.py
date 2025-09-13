@@ -55,6 +55,62 @@ def pathFind():
         grid = file.read().split('\n')
         for i in range(0,len(grid)):
             grid[i] = grid[i].split(",")
-        print(grid)
+        #use a tree to find path
+
+#return value is a boolean or tuple, the final return should be a False or a tuple. A tuple signifies success and a False signifies failure.
+def checkPath(x,y,direction,directions,target):
+    newX = x
+    newY = y
+    if(direction=="left"):
+        if(x > 0):
+            if(grid[y][x-1]==0):
+                newX-=1
+        else:
+            return False
+    elif(direction=="right"):
+        if(x < len(grid[y])):
+            if(grid[y][x+1]==0):
+                newX+=1
+        else:
+            return False
+    elif(direction=="up"):
+        if(y > 0):
+            if(grid[y-1][x]==0):
+                newY-=1
+        else:
+            return False
+    elif(direction=="down"):
+        if(y < len(grid)):
+            if(grid[y+1][x]==0):
+                newY+=1
+        else:
+            return False
+    if(grid[newY][newX]==0):
+        directions.append(direction)
+        x = newX
+        y = newY
+        if(x==target[0] and y==target[1]):
+            #once the spot is found return the required information
+            return (directions,x,y)
+        if(checkPath(x,y,"left",directions,target)):
+            return True
+        elif(checkPath(x,y,"right",directions,target)):
+            return True
+        elif(checkPath(x,y,"up",directions,target)):
+            return True
+        elif(checkPath(x,y,"down",directions,target))
+            return True
+        else:
+            return False
+    else:
+        return False
+
+#The idea is:
+#check all for directions
+#if any direction is movable, move in that direction, else return false
+#when receiving the value false, try moving in another direction
+#when no direction can be moved in, the pathfinding is halted
+
+
 
 main()
