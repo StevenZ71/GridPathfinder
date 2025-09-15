@@ -51,10 +51,38 @@ def editGrid():
     print("Invalid row, exiting edit mode")
 
 def pathFind():
+    #2d array
+    grid = ""
     with open("grid.txt") as file:
         grid = file.read().split('\n')
         for i in range(0,len(grid)):
             grid[i] = grid[i].split(",")
+    print("Enter starting position as two numbers separated with a comma: ")
+    pos = tuple(input().split(","))
+    #input validation
+    while(not isinstance(pos,tuple)):
+        print("Invalid position. Re-enter position: ")
+        pos = tuple(input().split(","))
+    #replace empty and non-number values with 0
+    temp = []
+    for x in pos:
+        try:
+            x = int(x)
+        except:
+            x = 0
+        temp.append(x)
+    pos = tuple(temp)
+    if(len(pos) < 2):
+        pos = (pos[0],0)
+    elif(not isinstance(pos[1],int)):
+        pos = (pos[0],0)
+    elif(pos[1] < 0):
+        pos = (pos[0],0)
+    if(not isinstance(pos[0],int)):
+        pos = (0,pos[1])
+    elif(pos[0] < 0):
+        pos = (0,pos[1])
+
         #use a tree to find path
 
 #return value is a boolean or tuple, the final return should be a False or a tuple. A tuple signifies success and a False signifies failure.
@@ -98,7 +126,7 @@ def checkPath(x,y,direction,directions,target):
             return True
         elif(checkPath(x,y,"up",directions,target)):
             return True
-        elif(checkPath(x,y,"down",directions,target))
+        elif(checkPath(x,y,"down",directions,target)):
             return True
         else:
             return False
