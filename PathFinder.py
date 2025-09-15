@@ -1,3 +1,6 @@
+#global variables
+#2d array
+grid = ""
 def main():
     print("Would you like to pathfind, edit grid, or close program? (p:pathfind, e:edit grid, c:close program)")
     running = True
@@ -51,13 +54,28 @@ def editGrid():
     print("Invalid row, exiting edit mode")
 
 def pathFind():
-    #2d array
-    grid = ""
     with open("grid.txt") as file:
+        #to make sure that the changes are saved
+        global grid
         grid = file.read().split('\n')
         for i in range(0,len(grid)):
             grid[i] = grid[i].split(",")
+            for j in range(0,len(grid[i])):
+                grid[i][j] = int(grid[i][j])
     print("Enter starting position as two numbers separated with a comma: ")
+    start = getCoord()
+    print("Enter ending position as two numbers separated with a comma: ")
+    end = getCoord()
+    #to make sure that the user sees the changes made
+    print("All invalid values have been replaced with 0. The start is:",start,"The end is:",end)
+    #use a tree to find path
+    result = checkPath(start[0],start[1],"right",[],end) or checkPath(start[0],start[1],"left",[],end) or checkPath(start[0],start[1],"up",[],end) or checkPath(start[0],start[1],"down",[],end)
+    if(result):
+        print("The steps taken from",start,"to",end,"are",result)
+    else:
+        print("There is no way to get from",start,"to",end)
+
+def getCoord():
     pos = tuple(input().split(","))
     #input validation
     while(not isinstance(pos,tuple)):
@@ -82,11 +100,18 @@ def pathFind():
         pos = (0,pos[1])
     elif(pos[0] < 0):
         pos = (0,pos[1])
-
-        #use a tree to find path
+    return pos
+        
 
 #return value is a boolean or tuple, the final return should be a False or a tuple. A tuple signifies success and a False signifies failure.
+#this isn't the most efficient path yet
 def checkPath(x,y,direction,directions,target):
+    #if the start is equal to the end, nothing needs to be done.
+    if(x==target[0] and y==target[1]):
+        print("The starting point is equal to the ending point. No pathfinding required.")
+        exit()
+    #check
+    print(x,y,grid[y],direction, directions)
     newX = x
     newY = y
     if(direction=="left"):
@@ -96,49 +121,60 @@ def checkPath(x,y,direction,directions,target):
         else:
             return False
     elif(direction=="right"):
-        if(x < len(grid[y])):
+        if(x+1 < len(grid[y])):
             if(grid[y][x+1]==0):
                 newX+=1
         else:
             return False
     elif(direction=="up"):
-        if(y > 0):
+        #len(grid[y-1]) > x is required to check right bound in case of a 2D array not being rectangular
+        #No need to check left bound as x is always greater than -1
+        if(y > 0 and len(grid[y-1]) > x):
             if(grid[y-1][x]==0):
                 newY-=1
         else:
             return False
     elif(direction=="down"):
-        if(y < len(grid)):
+        if(y+1 < len(grid) and len(grid[y+1]) > x):
             if(grid[y+1][x]==0):
                 newY+=1
         else:
             return False
+    #return false if a wall is encountered
+    if(x==newX and y==newY):
+        return False
     if(grid[newY][newX]==0):
         directions.append(direction)
         x = newX
         y = newY
         if(x==target[0] and y==target[1]):
             #once the spot is found return the required information
-            return (directions,x,y)
-        if(checkPath(x,y,"left",directions,target)):
-            return True
-        elif(checkPath(x,y,"right",directions,target)):
-            return True
-        elif(checkPath(x,y,"up",directions,target)):
-            return True
-        elif(checkPath(x,y,"down",directions,target)):
-            return True
-        else:
-            return False
+            return (directions)
+        #use slicing (:) in order to create copies of the arrays to prevent recursive calls changing current call's array
+        #use extra condition to make sure that no resources are wasted backtracking and to prevent infinite recursing
+        left = direction!="right" and checkPath(x,y,"left",directions[:],target)
+        #this works because as long as the value is not false or 0, the value is evaluated as true
+        #this way the array of directions can be passed up to the first function call
+        if(left):
+            return left
+        right = direction!="left" and checkPath(x,y,"right",directions[:],target)
+        #these conditionals are placed right after the variable is assigned because if the correct path is found there isn't any more reason to check a different path
+        if(right):
+            return right
+        up = direction!="down" and checkPath(x,y,"up",directions[:],target)
+        if(up):
+            return up
+        down = direction!="up" and checkPath(x,y,"down",directions[:],target)
+        if(down):
+            return down
+        return False
     else:
         return False
 
 #The idea is:
-#check all for directions
+#check all four directions
 #if any direction is movable, move in that direction, else return false
 #when receiving the value false, try moving in another direction
 #when no direction can be moved in, the pathfinding is halted
-
-
 
 main()
