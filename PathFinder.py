@@ -1,8 +1,12 @@
 #global variables
 #2d array
 grid = ""
+#dictionary to prevent going to previous squares
+locations = {}
+
 def main():
-    print("Would you like to pathfind, edit grid, or close program? (p:pathfind, e:edit grid, c:close program)")
+    #an edit mode should be made in order to edit the grid, with various tools especially for bigger grids
+    print("Would you like to pathfind, replace grid, or close program? (p:pathfind, r:replace grid, d:display grid, c:close program)")
     running = True
     answer = input()
     while(running):
@@ -10,18 +14,23 @@ def main():
             print("Entering pathfinding mode.")
             running = False
             pathFind()
-        elif(answer=="e" or answer=="E"):
+        elif(answer=="r" or answer=="R"):
             print("Entering editing mode.")
             running = False
-            editGrid()
+            replaceGrid()
+        elif(answer=="d" or answer=="D"):
+            running = False
+            readGrid()
+            for row in grid:
+                print(row)
         elif(answer=="c" or answer=="C"):
             running = False
             print("Program closed.")
         else:
-            print("Invalid answer")
+            print("Invalid answer. Would you like to pathfind, edit grid, or close program? (p:pathfind, r:replace grid, d:display grid, c:close program)")
             answer = input()
 
-def editGrid():
+def replaceGrid():
     #erase file
     with open("grid.txt","w") as file:
         file.write("")
@@ -53,7 +62,7 @@ def editGrid():
     #alert the user that edit mode is being exited
     print("Invalid row, exiting edit mode")
 
-def pathFind():
+def readGrid():
     with open("grid.txt") as file:
         #to make sure that the changes are saved
         global grid
@@ -62,17 +71,34 @@ def pathFind():
             grid[i] = grid[i].split(",")
             for j in range(0,len(grid[i])):
                 grid[i][j] = int(grid[i][j])
+
+def pathFind():
+    readGrid()
     print("Enter starting position as two numbers separated with a comma: ")
     start = getCoord()
     print("Enter ending position as two numbers separated with a comma: ")
     end = getCoord()
     #to make sure that the user sees the changes made
     print("All invalid values have been replaced with 0. The start is:",start,"The end is:",end)
+    #to make sure that pathfinding is even possible before trying
+    #cases in which index is out of bounds
+    if(start[1] > len(grid) or end[1] >= len(grid)):
+        print("Invalid starting or ending point, y position is out of bounds.")
+        exit()
+    if(start[0] > len(grid[start[1]]) or end[0] >= len(grid[end[1]])):
+        print("Invalid starting or ending point, x position is out of bounds.")
+        exit()
+    #case in which ending point is inside a wall
+    if(grid[end[1]][end[0]]!=0):
+        print("Invalid ending point, it must not be inside a wall.")
+        exit()
     #use a tree to find path
     result = checkPath(start[0],start[1],"right",[],end) or checkPath(start[0],start[1],"left",[],end) or checkPath(start[0],start[1],"up",[],end) or checkPath(start[0],start[1],"down",[],end)
     if(result):
+        #pathfinding success
         print("The steps taken from",start,"to",end,"are",result)
     else:
+        #pathfinding fail
         print("There is no way to get from",start,"to",end)
 
 def getCoord():
@@ -90,6 +116,7 @@ def getCoord():
             x = 0
         temp.append(x)
     pos = tuple(temp)
+    #make sure that the length of the tuple is at least 2, it doesn't matter if it is more because in the end this takes place in a 2d space
     if(len(pos) < 2):
         pos = (pos[0],0)
     elif(not isinstance(pos[1],int)):
@@ -112,6 +139,7 @@ def checkPath(x,y,direction,directions,target):
         exit()
     #check
     print(x,y,grid[y],direction, directions)
+    #used to compare original position and new position to see if a change is made
     newX = x
     newY = y
     if(direction=="left"):
@@ -144,9 +172,14 @@ def checkPath(x,y,direction,directions,target):
     if(x==newX and y==newY):
         return False
     if(grid[newY][newX]==0):
-        directions.append(direction)
         x = newX
         y = newY
+        global locations
+        #prevent returning previous points to speed up performance and prevent infinite loops
+        if(x,y) in locations:
+            return False
+        locations[(x,y)] = 1
+        directions.append(direction)
         if(x==target[0] and y==target[1]):
             #once the spot is found return the required information
             return (directions)
@@ -158,7 +191,7 @@ def checkPath(x,y,direction,directions,target):
         if(left):
             return left
         right = direction!="left" and checkPath(x,y,"right",directions[:],target)
-        #these conditionals are placed right after the variable is assigned because if the correct path is found there isn't any more reason to check a different path
+        #these conditionals are placed right after the variable is assigned because if the correct path is found there isn't any more reason to check a different path, at least for simple pathfinding
         if(right):
             return right
         up = direction!="down" and checkPath(x,y,"up",directions[:],target)
@@ -167,8 +200,10 @@ def checkPath(x,y,direction,directions,target):
         down = direction!="up" and checkPath(x,y,"down",directions[:],target)
         if(down):
             return down
+        #if all directions fail, pathfinding fails
         return False
     else:
+        #wall is in the way, return false
         return False
 
 #The idea is:
