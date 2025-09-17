@@ -12,7 +12,6 @@ def main():
             pass
     except:
         pass
-    #an edit mode should be made in order to edit the grid, with various tools especially for bigger grids
     print(introPrompt)
     running = True
     answer = input()
@@ -137,7 +136,6 @@ def editGrid():
                 else:
                     print("Invalid option.")
             except Exception as e:
-                print(e)
                 print("Invalid row number.")
         elif(answer=="d" or answer=="D"):
             #erase file
